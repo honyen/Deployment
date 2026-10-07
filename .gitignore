@@ -1,0 +1,8 @@
+# Build outputs
+**/[Bb]in/
+**/[Oo]bj/
+
+# Local IDE settings
+**/.vs/
+**/*.user
+**/*.suo
