@@ -1,0 +1,6 @@
+@DeploymentNetCore_HostAddress = http://localhost:5002
+
+GET {{DeploymentNetCore_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
