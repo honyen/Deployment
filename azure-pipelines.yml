@@ -1,7 +1,4 @@
-# ASP.NET Core
-# Build and test ASP.NET Core projects targeting .NET Core.
-# Add steps that run tests, create a NuGet package, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+# Build the ASP.NET Core project with the .NET 10 SDK.
 
 trigger:
 - main
@@ -11,11 +8,24 @@ pool:
 
 variables:
   buildConfiguration: 'Release'
+  projectPath: 'DeploymentNetCore/DeploymentNetCore.csproj'
 
 steps:
-- script: dotnet build --configuration $(buildConfiguration)
-  displayName: 'dotnet build $(buildConfiguration)'
+- task: UseDotNet@2
+  displayName: 'Install .NET 10 SDK'
+  inputs:
+    packageType: 'sdk'
+    version: '10.0.x'
+
 - task: DotNetCoreCLI@2
+  displayName: 'Restore dependencies'
+  inputs:
+    command: 'restore'
+    projects: '$(projectPath)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Build $(buildConfiguration)'
   inputs:
     command: 'build'
-    projects: 'DeploymentNetCore/DeploymentNetCore.csproj'
+    projects: '$(projectPath)'
+    arguments: '--configuration $(buildConfiguration) --no-restore'
