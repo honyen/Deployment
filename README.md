@@ -25,7 +25,9 @@ the selected VM's Azure DevOps Environment agent.
 4. For access outside the VM, allow the site's port in the Azure NSG and Windows
    Firewall. The agent requires outbound HTTPS access to Azure DevOps and its
    artifact storage. Configure an IIS HTTPS binding and certificate if needed;
-   the pipeline creates an HTTP binding for a new site on port 8080 by default.
+   the pipeline creates an HTTP binding for a new site on port 80 by default.
+   Ensure the binding serves `DeployApi`; a running Default Web Site using the
+   same binding must be stopped or assigned a different binding before deployment.
 
 ## Create and run the deployment pipeline
 
@@ -36,8 +38,10 @@ the selected VM's Azure DevOps Environment agent.
    `vmResourceName`. These are Azure DevOps names, not the Azure resource group
    or necessarily the Azure VM resource name.
 4. Review `siteName`, `deploymentRoot`, `httpPort`, and `healthCheckUrl`.
-   Defaults create `DeploymentNetCore`, its dedicated
-   `DeploymentNetCore-AppPool`, and `http://localhost:8080/HealthCheck`.
+   Defaults target Environment `prod`, VM resource `staging`, and create
+   `DeployApi` with the dedicated `DeployApi-AppPool`. Releases are stored under
+   `C:\inetpub\wwwroot\DeployApi\releases`, and the health URL is
+   `http://localhost/HealthCheck` on port 80.
    An existing site must use `<siteName>-AppPool`; existing bindings are preserved,
    so set the health URL to match them, including HTTPS/hostname if applicable.
    Use a dedicated pool with no other applications because deployment recycles it.

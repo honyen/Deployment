@@ -6,23 +6,25 @@ parameters:
 - name: environmentName
   displayName: 'Azure DevOps Environment containing the Windows VM'
   type: string
+  default: prod
 - name: vmResourceName
   displayName: 'VM resource name registered in that Environment'
   type: string
+  default: staging
 - name: siteName
   type: string
-  default: DeploymentNetCore
+  default: DeployApi
 - name: deploymentRoot
   type: string
-  default: 'C:\inetpub\DeploymentNetCore'
+  default: 'C:\inetpub\wwwroot\DeployApi'
 - name: httpPort
   displayName: 'HTTP port for a new IIS site'
   type: number
-  default: 8080
+  default: 80
 - name: healthCheckUrl
   displayName: 'Health URL accessible from the VM (match existing IIS bindings)'
   type: string
-  default: 'http://localhost:8080/HealthCheck'
+  default: 'http://localhost/HealthCheck'
 
 variables:
   buildConfiguration: Release
