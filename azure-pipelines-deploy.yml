@@ -1,0 +1,90 @@
+# Register this file as a separate Azure Pipeline. Deployments are manual.
+trigger: none
+pr: none
+
+parameters:
+- name: environmentName
+  displayName: 'Azure DevOps Environment containing the Windows VM'
+  type: string
+- name: vmResourceName
+  displayName: 'VM resource name registered in that Environment'
+  type: string
+- name: siteName
+  type: string
+  default: DeploymentNetCore
+- name: deploymentRoot
+  type: string
+  default: 'C:\inetpub\DeploymentNetCore'
+- name: httpPort
+  displayName: 'HTTP port for a new IIS site'
+  type: number
+  default: 8080
+- name: healthCheckUrl
+  displayName: 'Health URL accessible from the VM (match existing IIS bindings)'
+  type: string
+  default: 'http://localhost:8080/HealthCheck'
+
+variables:
+  buildConfiguration: Release
+  projectPath: DeploymentNetCore/DeploymentNetCore.csproj
+
+stages:
+- stage: Build
+  displayName: Publish Windows application
+  jobs:
+  - job: Publish
+    pool:
+      vmImage: windows-latest
+    steps:
+    - task: UseDotNet@2
+      inputs:
+        packageType: sdk
+        version: '10.0.x'
+    - task: DotNetCoreCLI@2
+      displayName: Publish for IIS (Windows x64)
+      inputs:
+        command: publish
+        publishWebProjects: false
+        projects: '$(projectPath)'
+        arguments: '--configuration $(buildConfiguration) --runtime win-x64 --self-contained false --output $(Build.ArtifactStagingDirectory)/app'
+        zipAfterPublish: false
+        modifyOutputPath: false
+    - publish: '$(Build.ArtifactStagingDirectory)/app'
+      artifact: iis-app
+    - publish: '$(Build.SourcesDirectory)/scripts/Deploy-Iis.ps1'
+      artifact: deployment-script
+
+- stage: Deploy
+  displayName: Deploy to Windows VM IIS
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  - deployment: DeployIis
+    displayName: Deploy and verify IIS application
+    environment:
+      name: ${{ parameters.environmentName }}
+      resourceType: virtualMachine
+      resourceName: ${{ parameters.vmResourceName }}
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: none
+          - download: none
+          - download: current
+            artifact: iis-app
+          - download: current
+            artifact: deployment-script
+          - task: PowerShell@2
+            displayName: Deploy release and check health
+            inputs:
+              targetType: filePath
+              filePath: '$(Pipeline.Workspace)/deployment-script/Deploy-Iis.ps1'
+              pwsh: false
+            env:
+              IIS_SITE_NAME: ${{ parameters.siteName }}
+              IIS_DEPLOYMENT_ROOT: ${{ parameters.deploymentRoot }}
+              IIS_HTTP_PORT: '${{ parameters.httpPort }}'
+              IIS_HEALTH_URL: ${{ parameters.healthCheckUrl }}
+              IIS_RELEASE_ID: $(Build.BuildId)
+              IIS_PACKAGE_PATH: $(Pipeline.Workspace)/iis-app
