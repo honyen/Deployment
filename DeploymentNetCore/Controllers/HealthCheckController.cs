@@ -10,7 +10,11 @@ namespace DeploymentNetCore.Controllers
 		public ActionResult Get()
 		{
 			return Ok();
+			if (true)
+			{
+				Console.WriteLine("test");
+			}
 		}
 	}
 }
-//testing tabs 5
+//testing tabs 6
