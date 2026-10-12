@@ -9,12 +9,12 @@ namespace DeploymentNetCore.Controllers
 		[HttpGet(Name = "HealthCheck")]
 		public ActionResult Get()
 		{
-			return Ok();
 			if (true)
 			{
 				Console.WriteLine("test");
 			}
-		}
-	}
+            return Ok();
+        }
+    }
 }
 //testing tabs 6
